@@ -1,0 +1,19 @@
+---
+# Notified when the member list changes; flushed right away in master.yml,
+# after named is running and the member zones exist.
+- name: Write the catalog zone file
+  ansible.builtin.template:
+    src: catalog.zone.j2
+    dest: "{{ bind_directory }}/{{ bind_catz_catalog }}.db"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0644"
+    validate: named-checkzone {{ bind_catz_catalog }} %s
+  vars:
+    bind_catz_serial: "{{ ansible_facts['date_time']['epoch'] }}"
+  listen: Catalog members changed
+
+- name: Reload the catalog zone
+  ansible.builtin.command: "{{ bind_catz_rndc }} reload {{ bind_catz_catalog }}"
+  changed_when: true
+  listen: Catalog members changed

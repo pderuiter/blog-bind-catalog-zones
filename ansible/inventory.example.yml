@@ -1,0 +1,14 @@
+---
+# Or generate it: cd ../terraform && terraform output -raw ansible_inventory > ../ansible/inventory.yml
+all:
+  vars:
+    ansible_user: ansible
+  children:
+    catz_master:
+      hosts:
+        master:
+          ansible_host: 10.71.0.176
+    catz_slaves:
+      hosts:
+        slave:
+          ansible_host: 10.71.0.177

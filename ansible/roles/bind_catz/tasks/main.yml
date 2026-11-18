@@ -1,0 +1,29 @@
+---
+- name: Load distribution-specific settings
+  ansible.builtin.include_vars: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Write the options
+  ansible.builtin.template:
+    src: named.conf.options.j2
+    dest: "{{ bind_options_conf }}"
+    owner: root
+    group: "{{ bind_group }}"
+    mode: "0640"
+  notify: Bind config changed
+
+- name: Write the catalog zone definition
+  ansible.builtin.template:
+    src: named.conf.local.j2
+    dest: "{{ bind_local_conf }}"
+    owner: root
+    group: "{{ bind_group }}"
+    mode: "0640"
+  notify: Bind config changed
+
+- name: Set up the master
+  ansible.builtin.include_tasks: master.yml
+  when: bind_catz_server_role == 'master'
+
+- name: Set up the slave
+  ansible.builtin.include_tasks: slave.yml
+  when: bind_catz_server_role == 'slave'

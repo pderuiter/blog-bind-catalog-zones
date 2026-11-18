@@ -1,0 +1,16 @@
+---
+# Addresses from the post
+bind_catz_master_address: 10.71.0.176
+bind_catz_slave_addresses:
+  - 10.71.0.177
+
+bind_catz_catalog: catalog.example.com
+
+# Member zones. Add a zone here and run the playbook: the master creates it with
+# rndc addzone, adds it to the catalog, and the slaves pick it up.
+# Set state: absent to remove it again.
+bind_catz_members:
+  - name: example.org
+    file: example.org
+#   masters: [10.71.0.144]                          # catalog metadata (optional)
+#   allow_transfer: [10.71.0.177/32, 10.71.0.247/32]

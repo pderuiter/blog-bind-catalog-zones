@@ -1,0 +1,6 @@
+---
+- name: BIND catalog zones, master and slave
+  hosts: catz_master:catz_slaves
+  gather_facts: true
+  roles:
+    - role: bind_catz

@@ -1,0 +1,17 @@
+{# Member records of the catalog. The owner label is the SHA-1 of the member
+   name in wire format, like nzf.py / openssl in the post. #}
+{% for zone in bind_catz_members if zone.state | default('present') == 'present' %}
+{% set ns = namespace(wire='') %}
+{% for label in zone.name.rstrip('.').lower().split('.') %}
+{% set ns.wire = ns.wire ~ ('%c' | format(label | length)) ~ label %}
+{% endfor %}
+{% set id = (ns.wire ~ ('%c' | format(0))) | hash('sha1') %}
+{{ id }}.zones PTR {{ zone.name.rstrip('.') }}.
+{% for m in zone.masters | default([]) %}
+masters.ext.{{ id }}.zones IN A {{ m }}
+{% endfor %}
+{% if zone.allow_transfer is defined %}
+allow-transfer.ext.{{ id }}.zones IN APL {% for a in zone.allow_transfer %}1:{{ a }}{{ ' ' if not loop.last }}{% endfor %}
+
+{% endif %}
+{% endfor %}

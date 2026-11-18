@@ -1,0 +1,15 @@
+// {{ ansible_managed }}
+{% if bind_catz_server_role == 'master' %}
+zone "{{ bind_catz_catalog }}" {
+    type master;
+    file "{{ bind_catz_catalog }}.db";
+    allow-transfer { {% for s in bind_catz_slave_addresses %}{{ s }}; {% endfor %}};
+    also-notify { {% for s in bind_catz_slave_addresses %}{{ s }}; {% endfor %}};
+};
+{% else %}
+zone "{{ bind_catz_catalog }}" {
+    type slave;
+    file "{{ bind_catz_catalog }}.db";
+    masters { {{ bind_catz_master_address }}; };
+};
+{% endif %}

@@ -1,0 +1,79 @@
+---
+- name: Write member zone files
+  ansible.builtin.template:
+    src: member.zone.j2
+    dest: "{{ bind_directory }}/{{ item.file }}"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0644"
+    force: false
+    validate: named-checkzone {{ item.name }} %s
+  loop: "{{ bind_catz_members }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.state | default('present') == 'present'
+
+# named.conf.local defines the catalog zone, so its file must exist before named
+# starts. Members are added further down, once their zones exist on the master.
+- name: Create an empty catalog if there is none yet
+  ansible.builtin.template:
+    src: catalog.zone.j2
+    dest: "{{ bind_directory }}/{{ bind_catz_catalog }}.db"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0644"
+    force: false
+  vars:
+    bind_catz_serial: 1
+    bind_catz_members: []
+
+- name: Start named with the new configuration
+  ansible.builtin.include_role:
+    name: bind
+    tasks_from: start
+
+- name: Ask named which member zones it has
+  ansible.builtin.command: "{{ bind_catz_rndc }} zonestatus {{ item.name }}"
+  loop: "{{ bind_catz_members }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: bind_catz_zonestatus
+  changed_when: false
+  failed_when: false
+
+- name: Add member zones (rndc addzone)
+  ansible.builtin.command: >-
+    {{ bind_catz_rndc }} addzone {{ item.item.name }}
+    '{type master; file "{{ item.item.file }}";};'
+  loop: "{{ bind_catz_zonestatus.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - item.item.state | default('present') == 'present'
+    - item.rc != 0
+  changed_when: true
+
+# The serial only moves when the member list changes: render the member records
+# on their own first, and rewrite the catalog only when they changed.
+- name: Render the catalog member records
+  ansible.builtin.template:
+    src: catalog.content.j2
+    dest: "{{ bind_directory }}/.{{ bind_catz_catalog }}.content"
+    owner: root
+    group: "{{ bind_group }}"
+    mode: "0640"
+  notify: Catalog members changed
+
+- name: Write and reload the catalog now
+  ansible.builtin.meta: flush_handlers
+
+# Last, so the slaves have already dropped the zone from the catalog
+- name: Remove member zones (rndc delzone)
+  ansible.builtin.command: "{{ bind_catz_rndc }} delzone {{ item.item.name }}"
+  loop: "{{ bind_catz_zonestatus.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - item.item.state | default('present') == 'absent'
+    - item.rc == 0
+  changed_when: true

@@ -1,0 +1,29 @@
+// {{ ansible_managed }}
+options {
+    directory "{{ bind_directory }}";
+{% for line in bind_platform_options %}
+    {{ line }}
+{% endfor %}
+
+    listen-on port 53 { any; };
+    listen-on-v6 port 53 { any; };
+    recursion no;
+{% if bind_catz_server_role == 'master' %}
+
+    server-id "authoritative";
+    allow-new-zones yes;
+{% else %}
+
+    masterfile-format text;
+    zone-statistics yes;
+    server-id "slave";
+
+    allow-new-zones yes;
+    catalog-zones {
+        zone "{{ bind_catz_catalog }}"
+              zone-directory "{{ bind_catz_zone_directory }}"
+              in-memory no
+              default-masters { {{ bind_catz_master_address }}; };
+    };
+{% endif %}
+};

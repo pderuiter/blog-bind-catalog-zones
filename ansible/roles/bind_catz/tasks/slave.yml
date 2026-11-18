@@ -1,0 +1,14 @@
+---
+# BIND does not create the zone-directory itself
+- name: Create the catalog zone directory
+  ansible.builtin.file:
+    path: "{{ bind_directory }}/{{ bind_catz_zone_directory }}"
+    state: directory
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0755"
+
+- name: Start named with the new configuration
+  ansible.builtin.include_role:
+    name: bind
+    tasks_from: start

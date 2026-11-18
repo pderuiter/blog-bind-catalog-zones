@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: bind_catz
+  namespace: pderuiter
+  author: Patrick de Ruiter
+  description: BIND 9 catalog zones (format version 2) with a master that adds member zones and slaves that follow the catalog
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+    - name: EL
+      versions:
+        - "9"
+  galaxy_tags:
+    - dns
+    - bind
+
+dependencies:
+  - role: bind

@@ -1,0 +1,5 @@
+---
+# This setup has no secrets: the catalog and member zones are transferred to
+# the slave's address, as in the post. The file exists so every companion repo
+# has the same layout.
+{}

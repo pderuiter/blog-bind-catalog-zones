@@ -1,0 +1,20 @@
+---
+# "master" or "slave" (the playbook sets it per group)
+bind_catz_server_role: master
+
+bind_catz_catalog: catalog.example.com
+bind_catz_master_address: 10.71.0.176
+bind_catz_slave_addresses:
+  - 10.71.0.177
+# Directory below the BIND working directory where the slave keeps member zones
+bind_catz_zone_directory: cat-zones
+
+# Member zones. The master adds them with "rndc addzone" and lists them in the
+# catalog; the slaves pick them up from the catalog. state: absent removes a
+# zone from the catalog (the slaves then delete it) and from the master.
+# Optional per-zone metadata (catalog v2 "ext" properties):
+#   masters: [10.71.0.144]            -> masters.ext.<hash>.zones A
+#   allow_transfer: [10.71.0.177/32]  -> allow-transfer.ext.<hash>.zones APL
+bind_catz_members:
+  - name: example.org
+    file: example.org
