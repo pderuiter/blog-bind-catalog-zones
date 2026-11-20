@@ -44,7 +44,8 @@
 - name: Add member zones (rndc addzone)
   ansible.builtin.command: >-
     {{ bind_catz_rndc }} addzone {{ item.item.name }}
-    '{type master; file "{{ item.item.file }}";};'
+    '{type master; file "{{ item.item.file }}";
+    allow-transfer { {% for s in bind_catz_slave_addresses %}{{ s }}; {% endfor %}};};'
   loop: "{{ bind_catz_zonestatus.results }}"
   loop_control:
     label: "{{ item.item.name }}"
